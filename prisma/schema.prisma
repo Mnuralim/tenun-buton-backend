@@ -1,0 +1,254 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DB_URL") // uses connection pooling
+}
+
+model Auth {
+  id                      String      @id @default(cuid())
+  email                   String      @unique
+  username                String      @unique
+  password                String?
+  is_verified             Boolean     @default(false)
+  password_reset_token    String?
+  password_reset_expired  DateTime?
+  email_verify_token      String      @default("")
+  user                    User?
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt    
+}
+
+model User {
+  id                      String      @id @default(cuid())
+  firstname               String?
+  lastname                String?
+  mobile                  String?     @unique
+  image                   String      @default("https://ik.imagekit.io/wridvl3du/my-cv1703997122865_s0RKCap6y?updatedAt=1703997126013")
+  role                    Role        @default(USER)
+  auth_id                 String      @unique
+  auth                    Auth        @relation(fields: [auth_id],references: [id])
+  wallet                  Wallet?
+  activity                Activity?
+  address                 Address[]
+  product                 Product[]
+  review                  Review[]
+  order                   Order[]
+  is_blocked              Boolean     @default(false)
+  is_active               Boolean     @default(true)
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt 
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model Wallet {
+  id                      String      @id @default(cuid())
+  user_id                 String      @unique
+  user                    User        @relation(fields: [user_id],references: [id])
+  balance                 Float       @default(0)
+  is_active               Boolean     @default(true)
+  note                    String?
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt       
+}
+
+model Activity {
+  id                      String      @id @default(cuid())
+  user_id                 String      @unique
+  user                    User        @relation(fields: [user_id],references: [id])
+  title                   String?
+  description             String?
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+model Address {
+  id                      String      @id @default(cuid())
+  user_id                 String
+  user                    User        @relation(fields: [user_id],references: [id])
+  country                 String      @default("INDONESIA")
+  province                String?
+  city                    String?
+  subdistrict             String?
+  village                 String?
+  postal_code             String?
+  address                 String?
+  order                   Order[]
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+model Product {
+  id                      String      @id @default(cuid())
+  name                    String
+  description             String
+  price                   Float
+  stock                   Int
+  sold                    Int         @default(0)
+  condition               Condition   @default(NEW)
+  weight                  Float       
+  length                  Float
+  width                   Float
+  thumbnail               String
+  seller_id               String
+  seller                  User        @relation(fields: [seller_id],references: [id])
+  category_id             String      
+  category                Category    @relation(fields: [category_id],references: [id])
+  images                  Image_Products[]
+  product_color           ProductColor[]
+  product_size            ProductSize[]
+  review                  Review[]
+  order_item              Item[]
+  is_archived             Boolean     @default(false)
+  is_active               Boolean     @default(true)
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+model Color {
+  id                      String      @id @default(cuid())
+  product_color           ProductColor[]
+  color                   String
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+
+model ProductColor {
+  product_id              String
+  product                 Product     @relation(fields: [product_id],references: [id])
+  color_id                String
+  color                   Color       @relation(fields: [color_id],references: [id])
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+  @@id([product_id,color_id])
+}
+
+model ProductSize {
+  product_id              String
+  product                 Product     @relation(fields: [product_id],references: [id])
+  size_id                 String
+  size                    Size        @relation(fields: [size_id],references: [id])
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+  @@id([product_id,size_id])
+}
+
+enum Condition {
+  OLD
+  NEW
+}
+
+model Size {
+  id                      String      @id @default(cuid())
+  product_size            ProductSize[]     
+  size                    SizeEnum    
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+enum SizeEnum {
+  XXS
+  XS
+  SM
+  L
+  XL
+  XXL
+}
+
+model Category {
+  id                      String      @id @default(cuid())
+  product                 Product[]
+  name                    String      
+  thumbnail               String?     @default("https://ik.imagekit.io/wridvl3du/placeholder-image.png?updatedAt=1705139445601")
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+model Image_Products {
+  id                      String      @id @default(cuid())
+  product_id              String      
+  product                 Product     @relation(fields: [product_id],references: [id])
+  url                     String      
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+
+model Review {
+  product_id              String
+  product                 Product     @relation(fields: [product_id],references: [id])
+  buyer_id                String
+  buyer                   User        @relation(fields: [buyer_id],references: [id])
+  rating                  Int         @default(0)
+  comment                 String
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+  @@id([product_id,buyer_id])
+}
+
+model Order {
+  id                      String      @id @default(cuid())
+  buyer_id                String      
+  buyer                   User        @relation(fields: [buyer_id],references: [id])
+  address_id              String
+  address                 Address     @relation(fields: [address_id],references: [id])
+  payment_status          PaymentStatus @default(PENDING)
+  item                    Item[]
+  shipping_cost           Float       
+  fee                     Float
+  total_price             Float
+  total_purchase          Float
+  total_invoice           Float
+  payment_method          String?
+  courier                 String
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELED
+}
+
+model Item {
+  id                      String      @id @default(cuid())
+  order_id                String
+  order                   Order       @relation(fields: [order_id],references: [id])
+  name_product            String
+  product_id              String
+  product                 Product     @relation(fields: [product_id],references: [id])
+  total_product           Int  
+  price                   Float 
+  total_price             Float
+  color                   String
+  size                    SizeEnum
+  weight                  Float
+  length                  Float
+  width                   Float
+  order_status            OrderStatus @default(PENDING)
+  created_at              DateTime    @default(now())
+  updated_at              DateTime    @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
