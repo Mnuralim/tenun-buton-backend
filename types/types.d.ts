@@ -62,11 +62,15 @@ interface UpdateUserBody {
 }
 
 interface AddressBody {
+  province_code?: string
   province?: string
+  city_code?: string
   city?: string
+  subdistrict_code?: string
   subdistrict?: string
   postal_code?: string
   address?: string
+  village_code?: string
   village?: string
   country?: string
 }

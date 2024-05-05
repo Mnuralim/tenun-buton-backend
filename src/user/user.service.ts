@@ -43,6 +43,8 @@ export const updateUser = async (body: UpdateUserBody, userId: string, file?: Ex
 export const addNewAddress = async (userId: string, body: AddressBody) => {
   const user = await userRepository.findUserById(userId)
   if (!user) throw new ApiError('User not found', 404)
+  if (user.address.length >= 3) throw new ApiError('Max address is 3', 400)
+
   const address = await userRepository.createAddress(userId, body)
   return address
 }

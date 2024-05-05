@@ -80,9 +80,13 @@ model Address {
   user                    User        @relation(fields: [user_id],references: [id])
   country                 String      @default("INDONESIA")
   province                String?
+  province_code           String?
   city                    String?
+  city_code               String?
   subdistrict             String?
+  subdistrict_code        String?
   village                 String?
+  village_code            String?
   postal_code             String?
   address                 String?
   order                   Order[]
